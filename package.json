@@ -1,0 +1,25 @@
+{
+  "name": "catalytic_challenge",
+  "version": "1.0.0",
+  "description": "I will defeat the challenge",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sweeneyp74/CatalyticChallenge.git"
+  },
+  "author": "Pat Sweeney",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sweeneyp74/CatalyticChallenge/issues"
+  },
+  "homepage": "https://github.com/sweeneyp74/CatalyticChallenge#readme",
+
+  "dependencies": {
+    "express": "^4.15.2",
+    "path": "^0.12.7"
+  }
+
+}

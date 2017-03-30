@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Catalytic Challenge Page</title>
+    <!--<link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css'>-->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0-alpha1/JSXTransformer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  </head>
+
+  <style>
+    body{
+      text-align: center;
+      background:  #fff176;
+    }
+    .userSize{
+      width: 50%;
+    }
+    .userClass{
+      float: right;
+    }
+    .borderClass{
+      border: solid;
+      border-width: 2px;
+      background: white;
+    }
+    .borderClass2{
+      border: solid;
+      border-width: 2px;
+      width: 50%;
+      border-color: red;
+    }
+    .editButton{
+      width:100px;
+      height: 25px;
+    }
+    .userAddButton{
+      width:100px;
+      height: 25px;
+    }
+    .sideBar{
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      border: solid;
+      border-width: 0px 1px 0px 0px;
+      width: 300px;
+      height: 100%;
+      background: lightblue;
+      overflow-y: scroll;
+    }
+    .mainContent{
+      margin: 0px;
+      position: absolute;
+      width: calc(100% - 300px);
+      height: 100%;
+      top: 0px;
+      left: 300px;
+    }
+    .upperMain{
+      width: 100%;
+      height: 30%;
+      background: #ffccbc;
+      overflow-y: scroll;
+      text-align: left;
+    }
+    .lowerMain{
+      width: 100%;
+      height: 70%;
+      background: #ffe0b2;
+      overflow-y: scroll;
+      text-align: left;
+    }
+    .step{
+      color: blue;
+    }
+
+    h1,h4{
+      margin: 0px;
+    }
+    p{
+      padding: 0px;
+      margin: 0px;
+    }
+    ul{
+      margin:0px;
+      width: 100%;
+      padding: 0px;
+    }
+    li{
+      list-style-type: none;
+      width:100%;
+    }
+    button{
+      margin-top: 0px;
+      height: 100px;
+      padding: 0px;
+      background: white;
+      border-color:black;
+      width: 100%;
+    }
+    button:hover{
+      background: grey;
+
+    }
+  </style>
+
+  <body>
+    <div id="list">Loading content now</div>
+  </body>
+
+  <script>
+    //this function requests json from 3 urls that act as api links.
+    function getData()
+    {
+      var users = null;
+      var processes = null;
+      var steps = null;
+
+      $.ajax({
+        dataType: 'json',
+        url: '/users',
+        data: "give me some json pls",
+        Async: false,
+        success: function(data){
+          console.log("user data returned");
+          users = data;
+          $.ajax({
+            dataType: 'json',
+            url: '/process',
+            data: "give me some json pls",
+            Async: false,
+            success: function(data){
+              console.log("process data returned");
+              processes = data;
+              $.ajax({
+                dataType: 'json',
+                url: '/steps',
+                data: "give me some json pls",
+                Async: false,
+                success: function(data){
+                  console.log("steps data returned");
+                  steps = data;
+                  loadDom(users,steps,processes);
+                },
+              });
+            },
+          });
+        },
+      });
+    }
+
+    getData(); //AJAX requst the data we will be using!
+
+  </script>
+
+  <script type="text/jsx">
+
+      class App extends React.Component {
+        constructor(props) {
+          super(props);
+          console.log(this.props.users);
+          console.log(this.props.steps);
+          console.log(this.props.processes);
+          this.state = {items: [], text: '',
+                        users: this.props.users,steps:this.props.steps,processes: this.props.processes,
+                        currentUser: null, currentProcess: null, currentStep: null};
+        }
+
+        render() {
+          if(this.state.currentProcess == null) //we dont have a currentProcess!
+          {
+            return (
+              <div>
+                <div className="sideBar">
+                  <button onClick={this.handleClick.bind(this)} id={this.state.processes.processID}>{this.state.processes.displayName}</button>
+                  <h5>CreatedBy - {this.state.processes.createdBy}</h5>
+                  <h5>Owner - {this.state.processes.owner}</h5>
+                  <h5>Team - {this.state.processes.teamName}</h5>
+                  <h5>Description - {this.state.processes.description}</h5>
+                  <h5>Number of Steps - {this.state.steps.length}</h5>
+                </div>
+                <div className="mainContent">
+                  <h1>Select a process to the left to get started</h1>
+                </div>
+              </div>
+            );
+          }
+          else if(this.state.currentStep == null) //we have not chosen a step!
+          {
+            return (
+              <div>
+                <div className="sideBar">
+                  <button onClick={this.handleBack.bind(this)}>back</button>
+                  <h1>Steps</h1>
+                  <ul>
+                    {this.state.steps.map(step => (
+                      <li>
+                      <button id={step.stepNumber} onClick={this.handleStepClick.bind(this)} className="step">{step.stepNumber} - {step.displayName}
+                      <br />Depends on: {step.requiredPreviousSteps.map(prev => ( <p>{prev}</p>))} <br /> <p className="borderClass userClass">Users Assigned: {step.role.users.map(prev => ( <p>{prev}</p>))}</p>
+                      </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mainContent">
+                  <div className="upperMain">
+                  <h1>Title - {this.state.currentProcess.displayName}</h1><input type="text" id="cptitleform" placeholder="enter new content here" /><button id="title" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  <h4>Description - {this.state.currentProcess.description}</h4><input type="text" id="cpdescriptionform" placeholder="enter new content here" /><button id="description" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  <h4>Category - {this.state.currentProcess.category}</h4><input type="text" id="cpcategoryform" placeholder="enter new content here" /><button id="category" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  </div>
+                  <div className="lowerMain"><h1>Select a step to the left to see details</h1></div>
+                </div>
+              </div>
+            );
+          }
+          else //we need to render the currently selected step!
+          {
+            return (
+              <div>
+                <div className="sideBar">
+                  <button onClick={this.handleBack.bind(this)}>back</button>
+                  <h1>Steps</h1>
+                  <ul>
+                    {this.state.steps.map(step => (
+                      <li>
+                      <button id={step.stepNumber} onClick={this.handleStepClick.bind(this)} className="step">{step.stepNumber} - {step.displayName}
+                      <br />Depends on: {step.requiredPreviousSteps.map(prev => ( <p>{prev}</p>))} <br /> <p className="borderClass userClass">Users Assigned: {step.role.users.map(prev => ( <p>{prev}</p>))}</p>
+                      </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mainContent">
+                  <div className="upperMain">
+                  <h1>Title - {this.state.currentProcess.displayName}</h1><input type="text" id="cptitleform" placeholder="enter new content here" /><button id="title" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  <h4>Description - {this.state.currentProcess.description}</h4><input type="text" id="cpdescriptionform" placeholder="enter new content here" /><button id="description" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  <h4>Category - {this.state.currentProcess.category}</h4><input type="text" id="cpcategoryform" placeholder="enter new content here" /><button id="category" onClick={this.handleProcessEdit.bind(this)} className="editButton">edit above item</button><br />
+                  </div>
+                  <div className="lowerMain">
+                    <h1>{this.state.currentStep.displayName} <input type="text" id="stepdn" placeholder="enter new content here" /><button id="displayName" onClick={this.handleStepEdit.bind(this)} className="editButton">edit above item</button></h1>
+                    <br /><p className="borderClass">Description: {this.state.currentStep.description} <input type="text" id="stepdf" placeholder="enter new content here" /><button id="description" onClick={this.handleStepEdit.bind(this)} className="editButton">edit above item</button></p>
+                    <br /><p className="borderClass">Depends on: {this.state.currentStep.requiredPreviousSteps.map(prev => ( <p>{prev}</p>))}</p>
+                    <br /><p className="borderClass">Conditions: {this.state.currentStep.conditions.map(prev => ( <p>{prev}</p>))}</p>
+                    <br /><p className="borderClass">Fields: {this.state.currentStep.fields.map(prev => ( <p>- {prev.displayName} -
+                       <p className="borderClass2">{prev.choices.map(choice => (<p>{choice}</p>))}</p></p>))}</p>
+                    <br /><p className="borderClass">Users Assigned: {this.state.currentStep.role.users.map(user => ( <button onClick={this.deleteUser.bind(this)} className="userAddButton">{user}</button>))}</p>
+                    <br /><p className="borderClass userSize">Click to assign a user to this step:<br />{this.state.users.map(user => ( <button onClick={this.addUser.bind(this)} className="userAddButton">{user.username}</button>))}</p>
+
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+
+        handleChange(e) {
+          this.setState({text: e.target.value});
+        }
+
+        deleteUser(e){
+          var username = $(e.target).text();
+          console.log("deleting " + username + " from the step");
+          var users = this.state.currentStep.role.users;
+          var index = 0;
+          while(index < users.length)
+          {
+            if(users[index] == username)
+            {
+              console.log("found and deleted " + username);
+              users.splice(index, 1);
+              console.log(users);
+
+              var cs = this.state.currentStep;
+              console.log(cs);
+              cs.role.users = users;
+              this.setState({currentStep: cs});
+
+              var stepOG = this.state.steps;
+              stepOG[cs.stepNumber - 1] = cs;
+              this.setState({steps: stepOG });
+
+              return;
+            }
+            index = index + 1;
+          }
+        }
+
+        addUser(e){
+          console.log($(e.target).text());
+          var username = $(e.target).text();
+          var users = this.state.currentStep.role.users;
+
+          var index = 0;
+          var inList = false;
+          while(index < users.length)
+          {
+            if(users[index] == username)
+            {
+              console.log("already added to step");
+              inList = true;
+            }
+            index = index + 1;
+          }
+          console.log('inList?= ' + inList);
+
+          if(inList)
+          {
+            window.alert(username + " already added to step!!!");
+          }
+          else
+          {
+            var cs = this.state.currentStep;
+            cs.role.users.push(username);
+            console.log(cs);
+            this.setState({currentStep: cs});
+
+            var stepOG = this.state.steps;
+            stepOG[cs.stepNumber - 1] = cs;
+            this.setState({steps: stepOG });
+          }
+
+        }
+
+        handleClick(e){
+          e.preventDefault();
+          this.setState({currentProcess: this.state.processes});
+          console.log(e.target.id);
+        }
+        handleBack(e){
+          e.preventDefault();
+          this.setState({currentProcess: null});
+          this.setState({currentStep: null});
+          console.log("lets go back ba ba back");
+        }
+        handleStepClick(e){
+          e.preventDefault();
+          console.log("changing to step " + e.currentTarget.id);
+          var stepArray = this.state.steps;
+          //console.log(stepArray[e.target.id - 1]);
+          this.setState({currentStep: stepArray[e.currentTarget.id - 1]});
+        }
+        handleStepEdit(e){
+          console.log("changing step info");
+          if(e.currentTarget.id == "description")
+          {
+            var val = $('#stepdf').val();
+            console.log("11111111");
+            console.log(val);
+            var cs = this.state.currentStep;
+            console.log(cs);
+            cs.description = val;
+            this.setState({currentStep: cs });
+            var stepOG = this.state.steps;
+            stepOG[cs.stepNumber - 1] = cs;
+            this.setState({steps: stepOG });
+          }
+          else if(e.currentTarget.id == "displayName")
+          {
+            var val = $('#stepdn').val();
+            console.log("11111111");
+            console.log(val);
+            var cs = this.state.currentStep;
+            console.log(cs);
+            cs.displayName = val;
+            this.setState({currentStep: cs });
+            var stepOG = this.state.steps;
+            console.log(stepOG);
+            stepOG[cs.stepNumber - 1] = cs;
+            console.log(stepOG);
+            this.setState({steps: stepOG });
+          }
+
+        }
+        handleProcessEdit(e){
+          e.preventDefault();
+          var id = e.target.id;
+          $('#popup').show();
+          console.log("handle process edit");
+          if(id == "title")
+          {
+            var val = $('#cptitleform').val();
+            console.log("0000000000");
+            console.log(val);
+            var cs = this.state.currentProcess;
+            console.log(cs);
+            cs.displayName = val;
+            this.setState({currentProcess: cs });
+            this.setState({processes: cs });
+          }
+          else if(id == "description")
+          {
+            var val = $('#cpdescriptionform').val();
+            console.log("0000000000");
+            console.log(val);
+            var cs = this.state.currentProcess;
+            console.log(cs);
+            cs.description = val;
+            this.setState({currentProcess: cs });
+            this.setState({processes: cs });
+          }
+          else if(id == "category")
+          {
+            var val = $('#cpcategoryform').val();
+            console.log("0000000000");
+            console.log(val);
+            var cs = this.state.currentProcess;
+            console.log(cs);
+            cs.category = val;
+            this.setState({currentProcess: cs });
+            this.setState({processes: cs });
+          }
+
+        }
+      }
+
+    function loadDom(users,steps,processes)
+    {
+      //console.log(users);
+      //console.log(steps);
+      //console.log(processes);
+      ReactDOM.render(<App users={users} steps={steps} processes={processes} />, document.getElementById("list"));
+    }
+  </script>
+</html>
